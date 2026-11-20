@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel – Orvyn</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#1C1338">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="painel.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="lockScreen" class="lock-screen">
+  <div class="lock-card">
+    <img class="lock-logo" src="favicon.svg" alt="Orvyn">
+    <h1 class="lock-title">Painel Orvyn</h1>
+    <p class="lock-sub">Entre com o e-mail e a senha da equipe.</p>
+    <form id="lockForm">
+      <input type="email" id="lockEmail" class="input" placeholder="E-mail" autocomplete="email" required>
+      <input type="password" id="lockPassword" class="input" placeholder="Senha" autocomplete="current-password" required>
+      <button type="submit" class="btn btn-primary btn-block" id="lockSubmit">Entrar</button>
+    </form>
+    <button type="button" class="lock-link" id="lockForgot">Esqueci minha senha</button>
+    <a class="lock-link" href="/">Voltar ao site</a>
+    <p class="lock-error hidden" id="lockError" role="alert"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <img class="brand-logo" src="favicon.svg" alt="">
+        <div><div class="brand-name">Orvyn</div><div class="brand-sub" id="userMail"></div></div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema" title="Alternar modo claro/escuro">🌙</button>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menu"><span class="nav-toggle-icon"></span></button>
+    </div>
+    <div class="sidebar-menu" id="sidebarMenu">
+      <nav class="nav">
+        <button class="nav-btn active" data-view="dashboard">Painel</button>
+        <button class="nav-btn" data-view="leads">Leads <span class="count hidden" id="newCount">0</span></button>
+      </nav>
+      <a class="nav-link" href="/">Ver o site</a>
+      <button class="btn-logout" id="btnLogout">Sair</button>
+    </div>
+  </aside>
+  <main id="main" class="main"></main>
+</div>
+
+<script src="painel-dados.js"></script>
+<script src="painel.js"></script>
+</body>
+</html>
