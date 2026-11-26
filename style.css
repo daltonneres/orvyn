@@ -209,3 +209,8 @@ dialog .btn.x{padding:13px 20px;font-size:13px}
   *{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
 }
+
+/* Mídias nos depoimentos */
+.fb img,.fb video{display:block;width:100%;max-height:260px;object-fit:cover;margin:0 0 14px}
+.fb audio{display:block;width:100%;margin:0 0 14px}
+.fb figure p{margin:0 0 14px;font-size:15px}.fb figure p a{color:var(--accent-tx)}

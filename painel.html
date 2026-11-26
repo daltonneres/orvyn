@@ -46,19 +46,20 @@
     </div>
     <div class="sidebar-menu" id="sidebarMenu">
       <nav class="nav">
-        <button class="nav-btn active" data-view="inicio">Início</button>
-        <button class="nav-btn" data-view="leads">Leads <span class="count hidden" id="newCount">0</span></button>
-        <button class="nav-btn" data-view="clientes">Clientes</button>
-        <button class="nav-btn" data-view="projetos">Projetos</button>
-        <button class="nav-btn" data-view="portfolio">Portfólio</button>
-        <button class="nav-btn" data-view="financeiro">Financeiro</button>
-        <button class="nav-btn" data-view="agenda">Agenda</button>
+        <button class="nav-btn active" data-view="inicio"><span class="ico">🏠</span>Início</button>
+        <button class="nav-btn" data-view="leads"><span class="ico">📥</span>Leads <span class="count hidden" id="newCount">0</span></button>
+        <button class="nav-btn" data-view="clientes"><span class="ico">👥</span>Clientes</button>
+        <button class="nav-btn" data-view="projetos"><span class="ico">🗂️</span>Projetos</button>
+        <button class="nav-btn" data-view="portfolio"><span class="ico">🖼️</span>Portfólio</button>
+        <button class="nav-btn" data-view="feedbacks"><span class="ico">⭐</span>Feedbacks</button>
+        <button class="nav-btn" data-view="financeiro"><span class="ico">💰</span>Financeiro</button>
+        <button class="nav-btn" data-view="agenda"><span class="ico">📅</span>Agenda</button>
       </nav>
-      <a class="nav-link" href="/">Ver o site</a>
+      <a class="site-btn" href="/" target="_blank" rel="noopener"><span aria-hidden="true">↗</span> Ver o site</a>
       <button class="btn-logout" id="btnLogout">Sair</button>
     </div>
   </aside>
-  <main id="main" class="main"></main>
+  <div class="content"><div class="topbar"><input id="q" class="input search" type="search" placeholder="Buscar clientes, projetos, leads, feedbacks…" aria-label="Buscar no painel"></div><main id="main" class="main"></main></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>

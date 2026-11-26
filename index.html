@@ -88,11 +88,9 @@
 
 <section><div class="wrap">
 <h2>O que dizem de nós</h2>
-<!-- TROCAR: depoimentos e nomes pelos reais, com autorização dos clientes -->
-<div class="fb">
-<figure><blockquote>“A marca ficou com a cara do negócio. Recebemos elogios já na primeira semana.”</blockquote><figcaption>Nome do cliente, empresa</figcaption></figure>
-<figure><blockquote>“Entrega rápida, comunicação clara e um site que realmente traz contatos.”</blockquote><figcaption>Nome do cliente, empresa</figcaption></figure>
-<figure><blockquote>“Design e código caminhando juntos fez toda a diferença no resultado final.”</blockquote><figcaption>Nome do cliente, empresa</figcaption></figure>
+<!-- Depoimentos vêm do painel (aba Feedbacks), só os autorizados e publicados -->
+<div class="fb" id="fbBox">
+<p class="proj-empty">Em breve, depoimentos de clientes estarão disponíveis por aqui.</p>
 </div></div></section>
 
 <section id="time"><div class="wrap">
@@ -175,7 +173,7 @@
   const box = document.querySelector('#projetos .proj');
   const fallback = '<p class="proj-empty">Em breve, projetos criados pela Orvyn estarão disponíveis por aqui.</p>';
   const esc = value => String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const categorias = {identidade:'Identidade visual',landing:'Landing page',site:'Site',sistema:'Sistema ou app',video:'Vídeo',social:'Social media',outro:'Projeto'};
+  const categorias = {identidade:'Identidade visual',landing:'Landing page',site:'Site',sistema:'Sistema',app:'App',video:'Vídeo',social:'Social media',outro:'Projeto'};
   app.firestore().collection('portfolio').where('publicado', '==', true).onSnapshot(snapshot => {
     if (!box) return;
     if (snapshot.empty) { box.innerHTML = fallback; return; }
@@ -186,9 +184,22 @@
       const visual = mediaUrl ? (isVideo ? `<video src="${mediaUrl}" muted playsinline controls></video>` : `<img src="${mediaUrl}" alt="${esc(p.nome)}" loading="lazy">`) : '<span>Projeto Orvyn</span>';
       const mediaLinks = (p.midias || []).filter(m => m.tipo === 'link' && /^https:\/\//.test(m.url)).map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.nome || 'Ver mídia')} ↗</a>`).join(' · ');
       const link = /^https:\/\//.test(p.link || '') ? `<a class="project-link" href="${esc(p.link)}" target="_blank" rel="noopener">Acessar projeto ↗</a>` : '';
-      return `<article class="pc"><div class="shot">${visual}</div><div class="t"><span class="tag">${esc(categorias[p.categoria] || p.categoria || 'Projeto')}</span><h3>${esc(p.nome)}</h3><p>${esc(p.descricao)}</p>${p.entregas ? `<p class="project-deliverables"><b>O que criamos:</b> ${esc(p.entregas)}</p>` : ''}${link}${mediaLinks ? `<p class="project-media-links">${mediaLinks}</p>` : ''}</div></article>`;
+      return `<article class="pc"><div class="shot">${visual}</div><div class="t"><span class="tag">${esc((p.categoria === 'outro' && p.categoriaOutro) ? p.categoriaOutro : (categorias[p.categoria] || p.categoria || 'Projeto'))}${p.exemplo ? ' · exemplo' : ''}</span><h3>${esc(p.nome)}</h3><p>${esc(p.descricao)}</p>${p.entregas ? `<p class="project-deliverables"><b>O que criamos:</b> ${esc(p.entregas)}</p>` : ''}${link}${mediaLinks ? `<p class="project-media-links">${mediaLinks}</p>` : ''}</div></article>`;
     }).join('');
   }, err => console.info('Vitrine de projetos indisponível:', err.code));
+  const fbBox = document.getElementById('fbBox');
+  const fbFallback = '<p class="proj-empty">Em breve, depoimentos de clientes estarão disponíveis por aqui.</p>';
+  if (fbBox) app.firestore().collection('feedbacks').where('publicado', '==', true).onSnapshot(s => {
+    if (s.empty) { fbBox.innerHTML = fbFallback; return; }
+    fbBox.innerHTML = s.docs.map(d => d.data()).map(f => {
+      const ms = (f.midias || []).filter(m => /^https:\/\//.test(m.url));
+      const img = ms.filter(m => m.tipo === 'imagem').map(m => `<img src="${esc(m.url)}" alt="${esc(m.nome)}" loading="lazy">`).join('');
+      const vid = ms.filter(m => m.tipo === 'video').map(m => `<video src="${esc(m.url)}" controls playsinline></video>`).join('');
+      const aud = ms.filter(m => m.tipo === 'audio').map(m => `<audio src="${esc(m.url)}" controls></audio>`).join('');
+      const lnk = ms.filter(m => m.tipo === 'link').map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.nome || 'Ver mais')} ↗</a>`).join(' · ');
+      return `<figure><blockquote>“${esc(f.texto)}”</blockquote>${img}${vid}${aud}${lnk ? `<p>${lnk}</p>` : ''}<figcaption>${esc(f.clienteNome)}${f.exemplo ? ' (exemplo)' : ''}</figcaption></figure>`;
+    }).join('');
+  }, err => console.info('Depoimentos indisponíveis:', err.code));
 })();
 </script>
 </body>
