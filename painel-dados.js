@@ -1,38 +1,31 @@
-/* Camada de dados do painel (login + leads).
-   Hoje só existe o MODO DEMONSTRAÇÃO (abra painel.html?demo): dados de exemplo, nada é salvo.
-   Quando o banco estiver criado, este arquivo é trocado por uma versão que conversa com ele.
-   Contrato que o painel.js espera:
-     ready                      true quando há banco conectado
-     onAuth(cb)                 chama cb(usuario | null) quando entra/sai
-     signIn(email, senha)       entra (lança Error com mensagem em português se falhar)
-     reset(email)               envia e-mail de troca de senha
-     signOut()                  sai
-     listen(cb, erroCb)         chama cb(listaDeLeads) a cada mudança; devolve função que para de ouvir
-     update(id, dados)          atualiza campos de um lead
-     remove(id)                 apaga um lead
-   Cada lead: { id, nome, tel, data:'AAAA-MM-DD', hora:'HH:MM', assunto, status, meet } */
+/* Camada de dados do painel: Firebase Auth (login) + Firestore (leads, projetos, financeiro, agenda).
+   API: ready, onAuth(cb), signIn(email,senha), reset(email), signOut(),
+        listen(colecao, cb, erroCb) → função que para de ouvir, add(colecao, dados), update(colecao, id, dados), remove(colecao, id) */
 (() => {
-  if (!/[?&]demo\b/.test(location.search)) { window.PAINEL_DADOS = { ready: false }; return; }
-
-  const dia = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10) };
-  let leads = [
-    { id: 'd1', nome: 'Ana Souza', tel: '(46) 99999-1111', data: dia(2), hora: '10:00', assunto: 'Identidade visual, Site ou landing page', status: 'novo' },
-    { id: 'd2', nome: 'Carlos Lima', tel: '(46) 98888-2222', data: dia(3), hora: '15:00', assunto: 'Tenho uma loja e quero um site novo', status: 'novo' },
-    { id: 'd3', nome: 'Marina Alves', tel: '(49) 97777-3333', data: dia(1), hora: '14:00', assunto: 'Sistema ou aplicativo', status: 'contatado' },
-    { id: 'd4', nome: 'Pedro Rocha', tel: '(46) 96666-4444', data: dia(4), hora: '09:00', assunto: 'Redes sociais', status: 'agendado', meet: 'https://meet.google.com/abc-defg-hij' },
-    { id: 'd5', nome: 'Julia Prado', tel: '(41) 95555-5555', data: dia(-3), hora: '11:00', assunto: '', status: 'concluido' }
-  ];
-  let user = { email: 'modo demonstração' }, authCb = null, listenCb = null;
-  const push = () => listenCb && listenCb(leads.map(l => ({ ...l })));
-
+  const cfg = window.FIREBASE_CONFIG;
+  if (!window.firebase || !cfg || !cfg.apiKey || /^COLE/.test(cfg.apiKey)) { window.PAINEL_DADOS = { ready: false }; return; }
+  const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
+  const auth = app.auth(), db = app.firestore();
+  const col = n => db.collection(n);
+  const ms = x => (x.criado && x.criado.toMillis ? x.criado.toMillis() : 0);
+  const MSG = {
+    'auth/invalid-credential': 'E-mail ou senha incorretos.', 'auth/wrong-password': 'E-mail ou senha incorretos.',
+    'auth/user-not-found': 'E-mail ou senha incorretos.', 'auth/invalid-email': 'Esse e-mail não parece válido.',
+    'auth/user-disabled': 'Esse acesso foi desativado.', 'auth/too-many-requests': 'Muitas tentativas. Espere um pouco e tente de novo.',
+    'auth/network-request-failed': 'Sem conexão. Verifique a internet e tente de novo.', 'auth/missing-email': 'Digite seu e-mail no campo acima primeiro.'
+  };
+  const fail = err => { throw new Error(MSG[err && err.code] || 'Algo deu errado. Tente de novo.') };
   window.PAINEL_DADOS = {
     ready: true,
-    onAuth(cb) { authCb = cb; cb(user) },
-    signIn() { user = { email: 'modo demonstração' }; authCb(user); return Promise.resolve() },
-    reset() { return Promise.resolve() },
-    signOut() { user = null; authCb(null) },
-    listen(cb) { listenCb = cb; push(); return () => { listenCb = null } },
-    update(id, d) { leads = leads.map(l => l.id === id ? { ...l, ...d } : l); push(); return Promise.resolve() },
-    remove(id) { leads = leads.filter(l => l.id !== id); push(); return Promise.resolve() }
+    onAuth: cb => auth.onAuthStateChanged(u => cb(u ? { email: u.email } : null)),
+    signIn: (email, senha) => auth.signInWithEmailAndPassword(email, senha).catch(fail),
+    reset: email => auth.sendPasswordResetEmail(email).catch(fail),
+    signOut: () => auth.signOut(),
+    listen: (c, cb, errCb) => col(c).onSnapshot(
+      s => cb(s.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })).sort((a, b) => ms(b) - ms(a))),
+      e => { console.error(e); errCb && errCb(e) }),
+    add: (c, d) => col(c).add({ ...d, criado: firebase.firestore.FieldValue.serverTimestamp() }),
+    update: (c, id, d) => col(c).doc(id).update(d),
+    remove: (c, id) => col(c).doc(id).delete()
   };
 })();

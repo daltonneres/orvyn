@@ -46,8 +46,11 @@
     </div>
     <div class="sidebar-menu" id="sidebarMenu">
       <nav class="nav">
-        <button class="nav-btn active" data-view="dashboard">Painel</button>
+        <button class="nav-btn active" data-view="inicio">Início</button>
         <button class="nav-btn" data-view="leads">Leads <span class="count hidden" id="newCount">0</span></button>
+        <button class="nav-btn" data-view="projetos">Projetos</button>
+        <button class="nav-btn" data-view="financeiro">Financeiro</button>
+        <button class="nav-btn" data-view="agenda">Agenda</button>
       </nav>
       <a class="nav-link" href="/">Ver o site</a>
       <button class="btn-logout" id="btnLogout">Sair</button>
@@ -56,6 +59,10 @@
   <main id="main" class="main"></main>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="painel-dados.js"></script>
 <script src="painel.js"></script>
 </body>

@@ -119,3 +119,9 @@ a{color:inherit}
   .brand-sub{max-width:160px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Formulários e módulos */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px;align-items:center}
+.stat-value.sm{font-size:20px;margin-top:12px}
+.stat-value.neg{color:var(--brick)}
+.lead.st-entrada{border-left-color:var(--emerald)}.lead.st-saida{border-left-color:var(--brick)}
