@@ -12,8 +12,13 @@
   const PST = { andamento: 'Em andamento', aguardando: 'Aguardando', concluido: 'Concluído' };
   const PCLS = { andamento: 'contatado', aguardando: 'novo', concluido: 'concluido' };
   const PESSOAS = { guilherme: 'Guilherme', dalton: 'Dalton', ambos: 'Os dois' };
-  const EQUIPE = { 'guilherme.silva@orvyn.com': 'guilherme', 'dalton.neres@orvyn.com': 'dalton' };
-  const COLS = ['leads', 'projetos', 'financeiro', 'agenda'];
+  const EQUIPE = { 'guilherme.souza@orvyn.com': 'guilherme', 'dalton.neres@orvyn.com': 'dalton' };
+  const COLS = ['leads', 'clientes', 'projetos', 'portfolio', 'financeiro', 'agenda'];
+  const PTYPES = { identidade: 'Identidade visual', landing: 'Landing page', site: 'Site', sistema: 'Sistema ou app', video: 'Vídeo', social: 'Social media', outro: 'Outro' };
+  const validUrl = (value, optional = false) => {
+    if (!value && optional) return '';
+    try { const u = new URL(value); return u.protocol === 'https:' ? u.href : ''; } catch (_) { return ''; }
+  };
   const opts = (o, cur) => Object.entries(o).map(([k, v]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${v}</option>`).join('');
 
   /* ---------- tema ---------- */
@@ -47,7 +52,8 @@
 
   /* ---------- estado e menu ---------- */
   let view = 'inicio', filter = 'todos', mine = true, mes = hoje().slice(0, 7), eu = null, nome = '', unsubs = [];
-  let data = { leads: [], projetos: [], financeiro: [], agenda: [] };
+  let data = { leads: [], clientes: [], projetos: [], portfolio: [], financeiro: [], agenda: [] };
+  setInterval(() => { const clock = $('#panelClock'); if (clock) clock.textContent = new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' }); }, 60000);
   const menu = $('#sidebarMenu'), toggle = $('#navToggle');
   toggle.onclick = () => { menu.classList.toggle('open'); toggle.classList.toggle('open') };
   const go = (v, f) => {
@@ -62,7 +68,7 @@
   const mineOf = a => mine && eu ? a.filter(x => !x.resp || x.resp === eu || x.resp === 'ambos') : a;
   const by = s => data.leads.filter(l => l.status === s);
   const quem = r => PESSOAS[r] || '';
-  const head = (t, d, chips) => `<header class="view-header"><h1 class="view-title">${t}</h1><p class="view-desc">${d}</p></header>` +
+  const head = (t, d, chips) => `<header class="view-header"><div class="view-heading"><div><h1 class="view-title">${t}</h1><p class="view-desc">${d}</p></div><time id="panelClock" class="panel-clock">${new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</time></div></header>` +
     (chips ? `<div class="chips"><button class="chip${mine ? ' on' : ''}" data-mine="1">Só meus</button><button class="chip${mine ? '' : ' on'}" data-mine="0">Todos</button></div>` : '');
   const form = (col, campos) => `<form class="fgrid" data-form="${col}">${campos}<select class="input" name="resp" aria-label="Responsável">${opts(PESSOAS, eu)}</select><button class="btn btn-primary" type="submit">Adicionar</button></form>`;
   const item = (col, x, cls, titulo, meta, stamp, ctl) => `
@@ -71,9 +77,13 @@
       <div class="lead-ctl">${ctl}<button class="btn btn-danger btn-sm" data-act="del">Excluir</button></div>
     </article>`;
   const meta = (...p) => p.filter(Boolean).map(esc).join(' · ');
-  const proj = p => item('projetos', p, PCLS[p.status] || 'novo', p.nome, meta(p.cliente, p.prazo && 'prazo ' + fmtD(p.prazo), quem(p.resp)),
+  const proj = p => item('projetos', p, PCLS[p.status] || 'novo', p.nome, meta(p.clienteNome || p.cliente, p.valor && brl(p.valor), p.mensalidade ? brl(p.mensalidade) + '/mês' : '', p.prazo && 'prazo ' + fmtD(p.prazo), quem(p.resp)),
     `<span class="stamp ${PCLS[p.status] || 'novo'}">${PST[p.status] || ''}</span>`,
     `<select class="input sel" data-act="status" aria-label="Status">${opts(PST, p.status)}</select>`);
+  const portfolioItem = p => item('portfolio', p, p.publicado ? 'agendado' : 'novo', p.nome,
+    meta(PTYPES[p.categoria] || p.categoria || 'Projeto', quem(p.resp)),
+    `<span class="stamp ${p.publicado ? 'agendado' : 'novo'}">${p.publicado ? 'Publicado' : 'Rascunho'}</span>`,
+    `${p.descricao ? `<p class="portfolio-copy">${esc(p.descricao)}</p>` : ''}${p.entregas ? `<p class="portfolio-copy"><b>O que foi criado:</b> ${esc(p.entregas)}</p>` : ''}${p.link ? `<a class="btn btn-ghost btn-sm" href="${esc(p.link)}" target="_blank" rel="noopener">Abrir projeto</a>` : ''}<button class="btn btn-ghost btn-sm" data-act="edit-portfolio">Editar</button><button class="btn btn-primary btn-sm" data-act="publish">${p.publicado ? 'Tirar do site' : 'Publicar no site'}</button><form class="portfolio-edit hidden" data-portfolio-edit><input class="input" name="nome" value="${esc(p.nome)}" placeholder="Nome do projeto" required><select class="input" name="categoria">${opts(PTYPES,p.categoria)}</select><textarea class="input textarea" name="descricao" placeholder="Descrição pública" required>${esc(p.descricao)}</textarea><textarea class="input textarea" name="entregas" placeholder="O que foi criado?">${esc(p.entregas)}</textarea><input class="input" name="link" type="url" value="${esc(p.link)}" placeholder="Link público para acessar o projeto"><button class="btn btn-primary btn-sm" type="submit">Salvar edição</button><button class="btn btn-ghost btn-sm" data-act="cancel-edit" type="button">Cancelar</button></form><form class="media-form" data-portfolio-media><input class="input" name="mediaNome" placeholder="Nome da mídia" required><input class="input" name="mediaUrl" type="url" placeholder="Link direto da mídia (https://...)" required><select class="input" name="mediaTipo" aria-label="Tipo de mídia"><option value="imagem">Imagem / logo</option><option value="video">Vídeo direto</option><option value="link">Link / protótipo</option></select><button class="btn btn-ghost btn-sm" type="submit">Adicionar mídia</button></form>${(p.midias||[]).map(x=>`<a class="btn btn-ghost btn-sm" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.nome)}</a>`).join('')}`);
   const fin = f => item('financeiro', f, f.tipo, f.descricao, meta(fmtD(f.data), quem(f.resp)),
     `<span class="stamp ${f.tipo === 'entrada' ? 'agendado' : 'perdido'}">${f.tipo === 'entrada' ? '+' : '−'} ${brl(f.valor)}</span>`, '');
   const ag = a => { const t = hoje(), c = a.data === t ? 'agendado' : a.data < t ? 'concluido' : 'novo';
@@ -96,22 +106,38 @@
     const novos = by('novo').length, nc = $('#newCount');
     nc.textContent = novos; nc.classList.toggle('hidden', !novos);
     const m = $('#main');
+    const clock = new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' });
+    const clockEl = $('#panelClock'); if (clockEl) clockEl.textContent = clock;
     if (view === 'leads') {
       const list = filter === 'todos' ? data.leads : by(filter);
       m.innerHTML = head('Leads', 'Pessoas que pediram conversa pelo site. Chame, combine o horário e envie o link da chamada.') +
         `<div class="chips">${['todos', ...Object.keys(STATUS)].map(k => `<button class="chip${k === filter ? ' on' : ''}" data-filter="${k}">${k === 'todos' ? 'Todos' : STATUS[k]} (${k === 'todos' ? data.leads.length : by(k).length})</button>`).join('')}</div>` +
         (list.length ? list.map(lead).join('') : empty('Nenhum lead aqui ainda.'));
+    } else if (view === 'clientes') {
+      const l = mineOf(data.clientes);
+      m.innerHTML = head('Clientes', 'Cadastro e responsáveis pelos relacionamentos.', 1) +
+        form('clientes', '<input class="input" name="nome" placeholder="Nome do cliente" required><input class="input" name="tel" type="tel" placeholder="Telefone"><input class="input" name="descricao" placeholder="O que estamos desenvolvendo">') +
+        (l.length ? l.map(c => item('clientes', c, 'novo', c.nome, meta(c.tel, c.descricao, quem(c.resp)), '', '')).join('') : empty('Nenhum cliente cadastrado.'));
     } else if (view === 'projetos') {
       const ord = Object.keys(PST), l = [...mineOf(data.projetos)].sort((a, b) => ord.indexOf(a.status) - ord.indexOf(b.status));
       m.innerHTML = head('Projetos', 'O que está em andamento, para quem e até quando.', 1) +
-        form('projetos', '<input class="input" name="nome" placeholder="Nome do projeto" required><input class="input" name="cliente" placeholder="Cliente"><input class="input" name="prazo" type="date" aria-label="Prazo">') +
+        form('projetos', `<input class="input" name="nome" placeholder="Nome do projeto" required><select class="input" name="clienteId"><option value="">Cliente (opcional)</option>${data.clientes.map(c=>`<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('')}</select><input class="input" name="descricao" placeholder="Descrição do projeto"><input class="input" name="valor" type="number" min="0" step="0.01" placeholder="Valor total (R$)"><input class="input" name="mensalidade" type="number" min="0" step="0.01" placeholder="Mensalidade (R$)"><input class="input" name="prazo" type="date" aria-label="Prazo">`) +
         (l.length ? l.map(proj).join('') : empty('Nenhum projeto ainda.'));
+    } else if (view === 'portfolio') {
+      const l = mineOf(data.portfolio);
+      const jaImportados = new Set(data.portfolio.map(p => p.origemProjetoId).filter(Boolean));
+      const paraImportar = mineOf(data.projetos).filter(p => !jaImportados.has(p.id));
+      m.innerHTML = head('Portfólio', 'Cadastre trabalhos públicos. Valores e andamento interno continuam em Projetos e Financeiro.', 1) +
+        (paraImportar.length ? `<div class="portfolio-import"><span>${paraImportar.length} projeto(s) interno(s) podem virar rascunho.</span><button class="btn btn-ghost btn-sm" data-act="import-projects">Trazer para o portfólio</button></div>` : '') +
+        form('portfolio', `<input class="input" name="nome" placeholder="Nome público do projeto" required><select class="input" name="categoria">${opts(PTYPES,'outro')}</select><textarea class="input textarea" name="descricao" placeholder="Descrição para quem visita o site" required></textarea><textarea class="input textarea" name="entregas" placeholder="O que foi criado? Ex.: identidade, site e painel"></textarea><input class="input" name="link" type="url" placeholder="Link público para acessar o projeto">`) +
+        (l.length ? l.map(portfolioItem).join('') : empty('Nenhum trabalho no portfólio ainda. Cadastre um acima; ele só aparece no site depois de publicado.'));
     } else if (view === 'financeiro') {
       const l = mineOf(data.financeiro).filter(f => (f.data || '').startsWith(mes)).sort((a, b) => b.data.localeCompare(a.data));
       const e = soma(l, 'entrada'), s = soma(l, 'saida'), card = (t, v, c) => `<div class="stat-card"><span class="stat-label">${t}</span><span class="stat-value sm ${c}">${brl(v)}</span></div>`;
+      const share = person => l.filter(f=>f.tipo==='entrada' && (f.resp===person || f.resp==='ambos')).reduce((sum,f)=>sum+(Number(f.valor)||0)*(f.resp==='ambos'?0.5:1),0);
       m.innerHTML = head('Financeiro', 'Entradas e saídas do mês.', 1) +
         `<div class="fgrid"><input class="input" type="month" id="mes" value="${esc(mes)}" aria-label="Mês"></div>` +
-        `<div class="cards-grid" style="grid-template-columns:repeat(3,1fr)">${card('Entradas', e, 'agendado')}${card('Saídas', s, 'neg')}${card('Saldo', e - s, e - s >= 0 ? 'agendado' : 'neg')}</div>` +
+        `<div class="cards-grid finance-cards">${card('Entradas', e, 'agendado')}${card('Saídas', s, 'neg')}${card('Saldo', e - s, e - s >= 0 ? 'agendado' : 'neg')}${card('Dalton faturou', share('dalton'), 'contatado')}${card('Guilherme faturou', share('guilherme'), 'contatado')}</div>` +
         '<h2 class="sec-title">Novo lançamento</h2>' +
         form('financeiro', `<select class="input" name="tipo" aria-label="Tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select><input class="input" name="descricao" placeholder="Descrição" required><input class="input" name="valor" type="number" step="0.01" min="0" placeholder="Valor (R$)" required><input class="input" name="data" type="date" value="${hoje()}" required aria-label="Data">`) +
         (l.length ? l.map(fin).join('') : empty('Nenhum lançamento neste mês.'));
@@ -136,12 +162,32 @@
     const f = e.target.closest('[data-filter]'); if (f) { filter = f.dataset.filter; return render() }
     const mi = e.target.closest('[data-mine]'); if (mi) { mine = mi.dataset.mine === '1'; return render() }
     const g = e.target.closest('[data-go]'); if (g) return go(g.dataset.go, g.dataset.f);
+    const importBtn = e.target.closest('[data-act="import-projects"]');
+    if (importBtn) {
+      const imported = new Set(data.portfolio.map(p => p.origemProjetoId).filter(Boolean));
+      const pending = mineOf(data.projetos).filter(p => !imported.has(p.id));
+      if (!pending.length || !confirm(`Criar ${pending.length} rascunho(s) no portfólio? Eles ficarão ocultos do site até serem revisados e publicados.`)) return;
+      Promise.all(pending.map(p => D.add('portfolio', {
+        nome: p.nome || 'Projeto sem nome', categoria: 'outro', descricao: p.descricao || '', entregas: '',
+        link: validUrl(p.link, true), midias: [], publicado: false, resp: p.resp || eu, origemProjetoId: p.id
+      }))).then(() => alert('Rascunhos criados. Revise as descrições e links antes de publicar.')).catch(falha);
+      return;
+    }
     const card = e.target.closest('.lead'), act = e.target.closest('[data-act]');
     if (!card || !act) return;
     const c = card.dataset.col, id = card.dataset.id, x = data[c].find(i => i.id === id); if (!x) return;
     if (act.dataset.act === 'del') {
       if (confirm(`Excluir "${x.nome || x.titulo || x.descricao}"?`)) Promise.resolve(D.remove(c, id)).catch(() => alert('Não foi possível excluir.'));
       return;
+    }
+    if (act.dataset.act === 'edit-portfolio') { card.querySelector('[data-portfolio-edit]')?.classList.toggle('hidden'); return; }
+    if (act.dataset.act === 'cancel-edit') { card.querySelector('[data-portfolio-edit]')?.classList.add('hidden'); return; }
+    if (act.dataset.act === 'publish') {
+      if (c === 'portfolio' && !x.publicado && !String(x.descricao || '').trim()) {
+        card.querySelector('[data-portfolio-edit]')?.classList.remove('hidden');
+        alert('Adicione uma descrição antes de publicar este trabalho.'); return;
+      }
+      upd(c,id,{publicado:!x.publicado}); return;
     }
     if (c !== 'leads') return;
     if (act.dataset.act === 'contact' && x.status === 'novo') upd(c, id, { status: 'contatado' });
@@ -158,27 +204,54 @@
     if (s && card) upd(card.dataset.col, card.dataset.id, { status: s.value });
   });
   $('#main').addEventListener('submit', e => {
+    const edit = e.target.closest('[data-portfolio-edit]');
+    if (edit) {
+      e.preventDefault();
+      const card = edit.closest('.lead'), id = card.dataset.id, o = Object.fromEntries(new FormData(edit));
+      for (const k in o) o[k] = String(o[k]).trim();
+      const link = validUrl(o.link, true); if (o.link && !link) { alert('Use um link público começando com https://'); return; }
+      o.link = link;
+      Promise.resolve(D.update('portfolio', id, o)).then(() => edit.classList.add('hidden')).catch(falha);
+      return;
+    }
+    const media = e.target.closest('[data-portfolio-media]');
+    if (media) {
+      e.preventDefault();
+      const card = media.closest('.lead'), entry = data.portfolio.find(p => p.id === card.dataset.id), o = Object.fromEntries(new FormData(media));
+      const url = validUrl(o.mediaUrl); if (!entry || !url) { alert('Cole um link público válido começando com https://'); return; }
+      const midias = [...(entry.midias || []), { nome: o.mediaNome.trim(), url, tipo: o.mediaTipo }];
+      Promise.resolve(D.update('portfolio', entry.id, { midias })).then(() => media.reset()).catch(falha);
+      return;
+    }
     const fm = e.target.closest('[data-form]'); if (!fm) return;
     e.preventDefault();
     const col = fm.dataset.form, o = Object.fromEntries(new FormData(fm));
     for (const k in o) o[k] = String(o[k]).trim();
     if (col === 'financeiro') o.valor = Number(o.valor.replace(',', '.')) || 0;
-    if (col === 'projetos') o.status = 'andamento';
+    if (col === 'clientes') o.resp = o.resp || eu;
+    if (col === 'projetos') {
+      o.valor = Number(o.valor) || 0; o.mensalidade = Number(o.mensalidade) || 0; o.status = 'andamento'; o.midias = []; o.publicado = false;
+      const cliente = data.clientes.find(c=>c.id===o.clienteId); o.clienteNome = cliente ? cliente.nome : ''; delete o.clienteId;
+    }
+    if (col === 'portfolio') {
+      const link = validUrl(o.link, true); if (o.link && !link) { alert('Use um link público começando com https://'); return; }
+      o.link = link; o.publicado = false; o.midias = [];
+    }
     Promise.resolve(D.add(col, o)).then(() => { fm.reset(); document.activeElement && document.activeElement.blur(); render() }).catch(falha);
   });
 
   /* ---------- entrada ---------- */
-  const typing = () => document.activeElement && document.activeElement.matches('#main input');
+  const typing = () => document.activeElement && document.activeElement.matches('#main input, #main textarea, #main select');
   D.onAuth(u => {
     if (u) {
       eu = EQUIPE[(u.email || '').toLowerCase()] || null; nome = eu ? PESSOAS[eu] : u.email;
       $('#lockScreen').classList.add('hidden'); $('#app').classList.remove('hidden');
-      $('#userMail').textContent = u.email; $('#lockForm').reset();
+      $('#userMail').textContent = nome; $('#lockForm').reset();
       COLS.forEach(c => unsubs.push(D.listen(c, list => { data[c] = list; if (!typing()) render() },
         () => { $('#main').innerHTML = '<p class="empty">Não foi possível carregar os dados. Confira a conexão e as regras do Firestore.</p>' })));
       go('inicio');
     } else {
-      unsubs.forEach(f => f()); unsubs = []; data = { leads: [], projetos: [], financeiro: [], agenda: [] };
+      unsubs.forEach(f => f()); unsubs = []; data = { leads: [], clientes: [], projetos: [], portfolio: [], financeiro: [], agenda: [] };
       $('#app').classList.add('hidden'); $('#lockScreen').classList.remove('hidden');
     }
   });

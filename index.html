@@ -62,10 +62,7 @@
 <section id="projetos"><div class="wrap">
 <h2>Projetos que ressurgiram</h2>
 <div class="proj">
-<!-- TROCAR: nomes e descrições pelos projetos reais; no lugar de .shot dá para usar imagens -->
-<div class="pc"><div class="shot">Marca</div><div class="t"><span class="tag">Identidade visual</span><h3>Nome do projeto</h3><p>Logotipo, paleta e manual de marca para um negócio que queria sair do comum.</p></div></div>
-<div class="pc"><div class="shot b">Site</div><div class="t"><span class="tag">Landing page</span><h3>Nome do projeto</h3><p>Página rápida e responsiva, pensada para gerar contatos todos os dias.</p></div></div>
-<div class="pc"><div class="shot c">App</div><div class="t"><span class="tag">Desenvolvimento web</span><h3>Nome do projeto</h3><p>Sistema sob medida que organiza a rotina da empresa em um só lugar.</p></div></div>
+<p class="proj-empty">Em breve, projetos criados pela Orvyn estarão disponíveis por aqui.</p>
 </div></div></section>
 
 <section class="alt" id="mapa"><div class="wrap mapbox">
@@ -171,5 +168,28 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="script.js"></script>
+<script>
+(() => {
+  if (!window.firebase || !window.FIREBASE_CONFIG) return;
+  const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(window.FIREBASE_CONFIG);
+  const box = document.querySelector('#projetos .proj');
+  const fallback = '<p class="proj-empty">Em breve, projetos criados pela Orvyn estarão disponíveis por aqui.</p>';
+  const esc = value => String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const categorias = {identidade:'Identidade visual',landing:'Landing page',site:'Site',sistema:'Sistema ou app',video:'Vídeo',social:'Social media',outro:'Projeto'};
+  app.firestore().collection('portfolio').where('publicado', '==', true).onSnapshot(snapshot => {
+    if (!box) return;
+    if (snapshot.empty) { box.innerHTML = fallback; return; }
+    box.innerHTML = snapshot.docs.map(doc => {
+      const p = doc.data(), media = (p.midias || []).find(m => m.tipo === 'imagem' || m.tipo === 'video' || /\.(png|jpe?g|webp|gif|mp4|webm|mov)(\?|$)/i.test(m.url));
+      const mediaUrl = media && /^https:\/\//.test(media.url) ? esc(media.url) : '';
+      const isVideo = media && (media.tipo === 'video' || /\.(mp4|webm|mov)(\?|$)/i.test(media.url));
+      const visual = mediaUrl ? (isVideo ? `<video src="${mediaUrl}" muted playsinline controls></video>` : `<img src="${mediaUrl}" alt="${esc(p.nome)}" loading="lazy">`) : '<span>Projeto Orvyn</span>';
+      const mediaLinks = (p.midias || []).filter(m => m.tipo === 'link' && /^https:\/\//.test(m.url)).map(m => `<a href="${esc(m.url)}" target="_blank" rel="noopener">${esc(m.nome || 'Ver mídia')} ↗</a>`).join(' · ');
+      const link = /^https:\/\//.test(p.link || '') ? `<a class="project-link" href="${esc(p.link)}" target="_blank" rel="noopener">Acessar projeto ↗</a>` : '';
+      return `<article class="pc"><div class="shot">${visual}</div><div class="t"><span class="tag">${esc(categorias[p.categoria] || p.categoria || 'Projeto')}</span><h3>${esc(p.nome)}</h3><p>${esc(p.descricao)}</p>${p.entregas ? `<p class="project-deliverables"><b>O que criamos:</b> ${esc(p.entregas)}</p>` : ''}${link}${mediaLinks ? `<p class="project-media-links">${mediaLinks}</p>` : ''}</div></article>`;
+    }).join('');
+  }, err => console.info('Vitrine de projetos indisponível:', err.code));
+})();
+</script>
 </body>
 </html>
