@@ -25,6 +25,7 @@
     s.innerHTML = `<div class="track">${g}${g}</div>`;
   });
 
+
   /* Contador de estados atendidos */
   const cnt = $('#cnt');
   if (cnt) cnt.textContent = document.querySelectorAll('.tiles i.on').length;

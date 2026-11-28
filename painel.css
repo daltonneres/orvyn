@@ -1,7 +1,7 @@
 /* ===== Painel Orvyn — mesmo esquema do Caixa Aberto, com as cores da marca ===== */
 :root{
   --paper:#F5F4FA;--card:#FFFFFF;--ink:#1C1338;--soft:#5b5478;--line:#DDD8EE;
-  --brand:#A78BFA;--accent:#6D4FD6;--brand-bg:#ECE6FE;
+  --lime:#B7FF44;--brand:#A78BFA;--accent:#6D4FD6;--brand-bg:#ECE6FE;
   --emerald:#1F7A4D;--emerald-bg:#E4F1E8;--amber:#9A6510;--amber-bg:#FBEED9;--brick:#AE3B27;--brick-bg:#F7E4DE;
   --side:#1C1338;
   --display:Orbitron,"Segoe UI",sans-serif;--body:Inter,system-ui,sans-serif;
@@ -25,8 +25,8 @@ a{color:inherit}
 .btn{display:inline-block;border:0;border-radius:4px;padding:11px 18px;font:600 14px var(--body);text-decoration:none;text-align:center}
 .btn:active{transform:scale(.97)}
 .btn-block{width:100%}
-.btn-primary{background:var(--brand);color:#1C1338}
-.btn-primary:hover{opacity:.88}
+.btn-primary{background:var(--lime);color:#1C1338}
+.btn-primary:hover{background:var(--brand)}
 .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
 .btn-ghost:hover{border-color:var(--ink)}
 .btn-danger{background:transparent;color:var(--brick);border:1.5px solid var(--brick-bg)}
@@ -37,7 +37,7 @@ a{color:inherit}
 .lock-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
   background:radial-gradient(ellipse at top left,rgba(167,139,250,.25),transparent 55%),#150e2b}
 .lock-card{background:var(--card);border-radius:4px;padding:40px 36px;max-width:380px;width:100%;box-shadow:0 30px 60px rgba(0,0,0,.4);text-align:center;border-top:6px solid var(--brand)}
-.lock-logo{display:block;width:72px;height:72px;margin:0 auto 16px}
+.lock-logo{display:block;width:72px;height:72px;margin:0 auto 16px;border-radius:16px}
 .lock-title{font:900 24px var(--display);text-transform:uppercase;margin-bottom:6px}
 .lock-sub{color:var(--soft);font-size:14px;margin-bottom:22px}
 #lockForm{display:flex;flex-direction:column;gap:10px}
@@ -61,7 +61,7 @@ a{color:inherit}
 .nav-btn{display:flex;align-items:center;justify-content:space-between;text-align:left;background:transparent;border:0;color:#d9d3ee;padding:11px 12px;border-radius:4px;font-size:14px;font-weight:500}
 .nav-btn:hover{background:rgba(255,255,255,.07);color:#fff}
 .nav-btn.active{background:var(--brand);color:#1C1338;font-weight:600}
-.count{background:var(--brick);color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 8px}
+.count{background:var(--lime);color:#1C1338;font-size:11px;font-weight:700;border-radius:10px;padding:1px 8px}
 .nav-link{color:#c9c1e6;font-size:13px;text-decoration:none;padding:9px 12px}
 .nav-link:hover{color:#fff}
 .btn-logout{background:transparent;border:1.5px solid rgba(255,255,255,.18);color:#d9d3ee;padding:9px 12px;border-radius:4px;font-size:12.5px;margin-top:8px}
@@ -182,4 +182,4 @@ details.novo>.fgrid{padding:18px;margin:0}
 
 /* Botão Ver o site */
 .site-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;padding:11px 14px;border-radius:10px;background:rgba(167,139,250,.14);border:1.5px solid rgba(167,139,250,.5);color:var(--brand);font:600 14px var(--body);text-decoration:none;transition:background .15s,color .15s}
-.site-btn:hover,.site-btn:focus-visible{background:var(--brand);color:#1C1338}
+.site-btn:hover,.site-btn:focus-visible{background:var(--lime);border-color:var(--lime);color:#1C1338}
